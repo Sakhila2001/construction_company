@@ -16,8 +16,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
-
+    'default' => env('DB_CONNECTION', 'pgsql'),
     /*
     |--------------------------------------------------------------------------
     | Database Connections
@@ -84,7 +83,7 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
+            'url' => env('DATABASE_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
@@ -94,7 +93,7 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => 'prefer',
+            'sslmode' => env('DB_SSLMODE', 'require'), // Change 'prefer' to 'require'
         ],
 
         'sqlsrv' => [
@@ -147,7 +146,7 @@ return [
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_database_'),
             'persistent' => env('REDIS_PERSISTENT', false),
         ],
 
@@ -172,3 +171,20 @@ return [
     ],
 
 ];
+// At the VERY END of the file, after the closing ];
+// Vercel-specific database configuration
+if (getenv('VERCEL') !== false) {
+    $databaseConfig = app()->config['database'];
+
+    // Force PostgreSQL as default
+    $databaseConfig['default'] = 'pgsql';
+
+    // Update PostgreSQL connection with Vercel environment
+    $databaseConfig['connections']['pgsql']['host'] = getenv('DB_HOST');
+    $databaseConfig['connections']['pgsql']['database'] = getenv('DB_DATABASE');
+    $databaseConfig['connections']['pgsql']['username'] = getenv('DB_USERNAME');
+    $databaseConfig['connections']['pgsql']['password'] = getenv('DB_PASSWORD');
+    $databaseConfig['connections']['pgsql']['sslmode'] = 'require';
+
+    app()->config['database'] = $databaseConfig;
+}

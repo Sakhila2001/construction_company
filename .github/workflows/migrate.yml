@@ -1,0 +1,44 @@
+name: Run Laravel Migrations
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches: [ main ]
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: pgsql, pdo_pgsql
+
+    - name: Install dependencies
+      run: composer install --no-dev --optimize-autoloader
+
+    - name: Run migrations
+      env:
+        DB_CONNECTION: pgsql
+        DB_HOST: ep-young-frog-ai2igjhv-pooler.c-4.us-east-1.aws.neon.tech
+        DB_PORT: 5432
+        DB_DATABASE: neondb
+        DB_USERNAME: neondb_owner
+        DB_PASSWORD: ${{ secrets.NEON_PASSWORD }}
+        DB_SSLMODE: require
+      run: php artisan migrate --force
+
+    - name: Run seeders
+      env:
+        DB_CONNECTION: pgsql
+        DB_HOST: ep-young-frog-ai2igjhv-pooler.c-4.us-east-1.aws.neon.tech
+        DB_PORT: 5432
+        DB_DATABASE: neondb
+        DB_USERNAME: neondb_owner
+        DB_PASSWORD: ${{ secrets.NEON_PASSWORD }}
+        DB_SSLMODE: require
+      run: php artisan db:seed --class=AdminSeeder --force
